@@ -1,0 +1,14 @@
+//.data files are files that has the tflite modules
+//.binarypb files are files that has the graph config
+
+
+//CREATE A PRELOAD DATA AND JAVASCRIPT
+python3 ~/Documents/project/emsdk/upstream/emscripten/tools/file_packager.py face_mesh_hokei_solution_packed_assets.data --preload ~/Documents/PROGRAMMING/CPP/vto-project-main/mediapipe/models/face_detection/face_detection_short_range.tflite@/face_detection_short_range.tflite --preload ~/Documents/PROGRAMMING/CPP/vto-project-main/mediapipe/models/face_landmark/face_landmark_with_attention.tflite@/face_landmark_with_attention.tflite --js-output=face_mesh_hokei_solution_packed_assets_loader.js  --export-name=createMediapipeSolutionsPackedAssets
+
+
+//CREATE WASM BINARY DATA AND JAVASCRIPT
+bazel build -c dbg --copt="-g" --define tflite_with_xnnpack=true mediapipe/examples/wasm_stuff/rebuild_pose_tracking:pose-tracking-wasm --config=wasm
+
+
+
+

@@ -1,0 +1,60 @@
+# MediaPipe graph for custom TFLite model with 2 outputs (gender and landmarks)
+# The graph reads an input image, runs it through the model and outputs the gender and landmarks tensors.
+
+# Input stream
+input_stream: "input_video"
+
+# Nodes
+node {
+  # Opencv video decoder node
+  calculator: "VideoDecoderCalculator"
+  input_stream: "input_video"
+  output_stream: "image_frame_raw"
+}
+
+node {
+  # Image preprocessing node
+  calculator: "ImagePreprocessorCalculator"
+  input_stream: "IMAGE:image_frame_raw"
+  output_stream: "IMAGE:image_frame_preprocessed"
+}
+
+node {
+  # TFLite inference node
+  calculator: "TfLiteInferenceCalculator"
+  input_stream: "TENSORS:image_frame_preprocessed"
+  output_stream: "TENSORS:model_output"
+  options: {
+    [mediapipe.TfLiteInferenceCalculatorOptions.ext] {
+      model_path: "path/to/custom_tflite_model.tflite"
+    }
+  }
+}
+
+node {
+  # TfLiteTensorSlicer node for gender output
+  calculator: "TfLiteTensorSlicerCalculator"
+  input_stream: "TENSORS:model_output"
+  output_stream: "GENDER:gender_tensor"
+  options: {
+    [mediapipe.TfLiteTensorSlicerCalculatorOptions.ext] {
+      index: 0
+    }
+  }
+}
+
+node {
+  # TfLiteTensorSlicer node for landmarks output
+  calculator: "TfLiteTensorSlicerCalculator"
+  input_stream: "TENSORS:model_output"
+  output_stream: "LANDMARKS:landmarks_tensor"
+  options: {
+    [mediapipe.TfLiteTensorSlicerCalculatorOptions.ext] {
+      index: 1
+    }
+  }
+}
+
+# Output streams
+output_stream: "gender_tensor"
+output_stream: "landmarks_tensor"

@@ -1,0 +1,15 @@
+
+Link: http://192.168.1.11/ruentgen/mediapipe-for-vto
+
+Goal: 
+    1. export the canvas that contains the texture from c++ to js
+    2. export the normalize landmark list (multi_face_landmarks)
+
+Current Task
+- Error:  parameter 1 has unknown type
+   
+Question: 
+
+    -What are the causes of this Binding error
+    -What are the proper thing to remind if register_vetor or a class 
+ 

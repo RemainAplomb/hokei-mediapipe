@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gender Landmark Detection</title>
+</head>
+
+<style>
+  body {
+    /* background-color: black; */
+  }
+
+  #inputVideo {
+    position: absolute;
+    visibility: hidden;
+    height: 480px;
+    width: 640px;
+  }
+
+  #outputCanvas {
+    height: 480px;
+    width: 640px;
+  }
+</style>
+
+<body>
+  <video id="inputVideo"></video>
+  <canvas id="outputCanvas"></canvas>
+
+  <script>
+    // Load the gender landmark solution wasm and its dependencies
+    const Module = {
+      wasmBinaryFile: 'gender_landmark_solution_wasm_bin.wasm',
+      onRuntimeInitialized: () => {
+        // Initialize the solution
+        const solution = new Module.GenderLandmarkSolution();
+        solution.setOptions({
+          static_image_mode: false,  // set to true if processing static images
+          smooth_landmarks: true,
+          min_detection_confidence: 0.5,
+          min_tracking_confidence: 0.5
+        });
+        // Load the input video stream
+        navigator.mediaDevices.getUserMedia({video: true, audio: false})
+          .then((stream) => {
+            const video = document.getElementById('inputVideo');
+            video.srcObject = stream;
+            video.onloadedmetadata = () => {
+              video.play();
+              // Create the canvas context for drawing the output
+              const canvas = document.getElementById('outputCanvas');
+              const context = canvas.getContext('2d');
+              // Start processing the video stream
+              setInterval(() => {
+                context.drawImage(video, 0, 0, 640, 480);
+                const imageData = context.getImageData(0, 0, 640, 480);
+                const result = solution.process(imageData);
+                console.log(result);
+                // Draw the output landmarks on the canvas
+                for (let i = 0; i < result.multi_hand_landmarks.length; i++) {
+                  const landmarks = result.multi_hand_landmarks[i];
+                  for (let j = 0; j < landmarks.landmark.length; j++) {
+                    const x = landmarks.landmark[j].x * canvas.width;
+                    const y = landmarks.landmark[j].y * canvas.height;
+                    context.beginPath();
+                    context.arc(x, y, 5, 0, 2 * Math.PI);
+                    context.fillStyle = 'red';
+                    context.fill();
+                  }
+                }
+              }, 1000/30);
+            };
+          })
+          .catch((error) => {
+            console.error(error);
+          });
+      }
+    };
+
+    // Load the gender landmark solution wasm and its dependencies
+    const script = document.createElement('script');
+    script.src = 'gender_landmark_solution_wasm_bin.js';
+    document.body.appendChild(script);
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,149 @@
+# Define the input stream (image frames)
+input_stream: "input_video"
+
+# Define the output streams (gender and facial landmarks)
+output_stream: "gender_output"
+output_stream: "landmarks_output"
+
+
+
+# Throttle 
+node {
+
+  calculator: "FlowLimiterCalculator"
+
+  input_stream: "input_video"
+
+  input_stream: "FINISHED:detections"
+
+  input_stream_info: {
+
+    tag_index: "FINISHED"
+
+    back_edge: true
+
+  }
+
+  output_stream: "throttled_input_video"
+
+}
+
+
+# Transform 
+# Transforms the input image on CPU to a 224x224 image. To scale the image, by
+
+# default it uses the STRETCH scale mode that maps the entire input image to the
+
+# entire transformed image. As a result, image aspect ratio may be changed and
+
+# objects in the image may be deformed (stretched or squeezed), but the object
+
+# detection model used in this graph is agnostic to that deformation.
+
+node: {
+
+  calculator: "ImageTransformationCalculator"
+
+  input_stream: "IMAGE:throttled_input_video"
+
+  output_stream: "IMAGE:transformed_input_video"
+
+  node_options: {
+
+    [type.googleapis.com/mediapipe.ImageTransformationCalculatorOptions] {
+
+      output_width: 224
+
+      output_height: 224
+
+    }
+
+  }
+
+}
+
+
+# Converts the transformed input image on CPU into an image tensor stored as a
+
+# TfLiteTensor.
+
+node {
+
+  calculator: "TfLiteConverterCalculator"
+
+  input_stream: "IMAGE:transformed_input_video"
+
+  output_stream: "TENSORS:image_tensor"
+
+}
+
+
+# Runs a TensorFlow Lite model on CPU that takes an image tensor and outputs a
+
+# vector of tensors representing, for instance, detection boxes/keypoints and
+
+# scores.
+
+node {
+
+  calculator: "TfLiteInferenceCalculator"
+
+  input_stream: "TENSORS:image_tensor"
+
+  output_stream: "TENSORS:detection_tensors"
+
+  node_options: {
+
+    [type.googleapis.com/mediapipe.TfLiteInferenceCalculatorOptions] {
+      model_path: "mediapipe/models/mnv3_large_224_v2_genderFalse-2.tflite"
+      input_tensor_names: "input"
+      output_tensor_names: "gender_output,landmark_output"
+    }
+
+  }
+
+}
+
+
+# Define a node that takes detection tensors and outputs annotated images.
+node {
+  calculator: "DrawAnnotationCalculator"
+  input_stream: "DETECTION:detection_tensors"
+  input_stream: "IMAGE:image"
+  output_stream: "IMAGE:output_image"
+  node_options: {
+    [type.googleapis.com/mediapipe.DrawAnnotationCalculatorOptions] {
+      # Set the color of the gender annotation to green and the landmark
+      # annotation to red.
+      color: { r: 0 g: 255 b: 0 }
+      color: { r: 255 g: 0 b: 0 }
+      # Set the thickness of the annotations.
+      thickness: 2
+      # Set the confidence threshold for drawing the annotations.
+      score_threshold: 0.5
+      # Set the display mode to "RECTANGLE" to draw bounding boxes around
+      # detected faces.
+      display_mode: RECTANGLE
+    }
+  }
+}
+
+# Define a node that takes landmark tensors and outputs annotated images.
+node {
+  calculator: "LandmarkDrawingCalculator"
+  input_stream: "LANDMARKS:landmark_output"
+  input_stream: "IMAGE:image"
+  output_stream: "IMAGE:output_image"
+  node_options: {
+    [type.googleapis.com/mediapipe.LandmarkDrawingCalculatorOptions] {
+      # Set the radius of the landmark dots.
+      landmark_radius: 2
+      # Set the color of the landmark dots to red.
+      landmark_color: { r: 255 g: 0 b: 0 }
+      # Set the visibility of the landmark numbers to false.
+      draw_landmark_numbers: false
+      # Set the visibility of the connection lines between landmarks to false.
+      draw_connection_lines: false
+    }
+  }
+}

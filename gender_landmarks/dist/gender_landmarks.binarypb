@@ -1,0 +1,10 @@
+
+`FlowLimiterCalculatorinput_videoFINISHED:output_video"throttled_input_videoj
+FINISHED
+žImageTransformationCalculatorIMAGE:throttled_input_video"IMAGE:output_videoBL
+Btype.googleapis.com/mediapipe.ImageTransformationCalculatorOptionsàà
+ETfLiteConverterCalculatorIMAGE:output_video"TENSORS:image_tensor
+ÅTfLiteInferenceCalculatorTENSORS:image_tensor"TENSORS:output_tensorB{
+>type.googleapis.com/mediapipe.TfLiteInferenceCalculatorOptions9
+7mediapipe/models/mnv3_large_224_v2_genderFalse-2.tflite
+`"TfliteGenderAndLandmarksCalculatorTENSORS:output_tensor"#OUTPUT_TENSORS:output_tensor_valuesRinput_videozoutput_videoz#OUTPUT_TENSORS:output_tensor_values

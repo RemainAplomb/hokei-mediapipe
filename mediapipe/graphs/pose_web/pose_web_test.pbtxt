@@ -1,0 +1,55 @@
+# Images coming into and out of the graph.
+#input_stream: "input_frames_gpu"
+
+
+max_queue_size: 100
+
+#executor: {
+#  name: ""
+#  type: "ApplicationThreadExecutor"
+#}
+#
+#
+#node: {
+#  calculator: "ImageTransformationCalculator"
+#  input_stream: "IMAGE_GPU:input_frames_gpu"
+#  output_stream: "IMAGE_GPU:input_frames_gpu_flipped"
+#  node_options: {
+#    [type.googleapis.com/mediapipe.ImageTransformationCalculatorOptions]: {
+#      flip_horizontally: true
+#    }
+#  }
+#}
+#node {
+#  calculator: "PoseTrackingSubgraph"
+#  input_stream: "IMAGE:input_frames_gpu"
+#  output_stream: "LANDMARKS:pose_landmarks"
+#  output_stream: "NORM_RECT:pose_rect"
+#  output_stream: "DETECTIONS:pose_detections"
+#}
+
+
+
+# This graph named main_pass_throughcals_nosubgraph.pbtxt contains 4
+# passthrough calculators.
+input_stream: "in"
+node {
+    calculator: "PassThroughCalculator"
+    input_stream: "in"
+    output_stream: "out1"
+}
+node {
+    calculator: "PassThroughCalculator"
+    input_stream: "out1"
+    output_stream: "out2"
+}
+node {
+    calculator: "PassThroughCalculator"
+    input_stream: "out2"
+    output_stream: "out3"
+}
+node {
+    calculator: "PassThroughCalculator"
+    input_stream: "out3"
+    output_stream: "out4"
+}

@@ -1,0 +1,121 @@
+input_stream: "input_video"
+
+output_stream: "output_detections"
+
+output_stream: "face_detections"
+
+output_stream: "multi_face_landmarks"
+
+output_stream: "multi_face_geometry"
+
+output_stream: "output_video"
+
+max_queue_size: 1
+
+executor {
+  type: "ApplicationThreadExecutor"
+}
+
+
+# Defines side packets for further use in the graph.
+node {
+  calculator: "ConstantSidePacketCalculator"
+  output_side_packet: "PACKET:0:num_faces"
+  output_side_packet: "PACKET:1:with_attention"
+  node_options: {
+    [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
+      packet { int_value: 1 }
+      packet { bool_value: true }
+    }
+  }
+}
+
+# node {
+#   calculator: "GlScalerCalculator"
+#   input_stream: "VIDEO:input_video"
+#   output_stream: "VIDEO:transformed_input_video"
+#   node_options: {
+#     [type.googleapis.com/mediapipe.GlScalerCalculatorOptions] {
+#       scale_mode: FIT
+#     }
+#   }
+# }
+
+
+# Extracts the input image frame dimensions as a separate packet.
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE_GPU:input_video"
+  output_stream: "SIZE:input_video_size"
+}
+
+# node {
+#       calculator: "GenderDetection"
+#       input_stream: "IMAGE_GPU:input_video"
+#       output_stream: "DETECTIONS:output_detections"
+# }
+
+# Subgraph that detects faces and corresponding landmarks.
+node {
+  calculator: "FaceLandmarkFrontGpu"
+  input_stream: "IMAGE:input_video"
+  input_side_packet: "NUM_FACES:num_faces"
+  input_side_packet: "WITH_ATTENTION:with_attention"
+  input_side_packet: "USE_PREV_LANDMARKS:use_prev_landmarks"
+  output_stream: "LANDMARKS:0:multi_face_landmarks"
+  output_stream: "LANDMARKS:1:multi_mesh_landmarks"
+  output_stream: "DETECTIONS:face_detections"
+}
+
+# Generates an environment that describes the current virtual scene.
+node {
+  calculator: "FaceGeometryEnvGeneratorCalculator"
+  output_side_packet: "ENVIRONMENT:environment"
+  node_options: {
+    [type.googleapis.com/mediapipe.FaceGeometryEnvGeneratorCalculatorOptions] {
+      environment: {
+        origin_point_location: TOP_LEFT_CORNER
+        perspective_camera: {
+          vertical_fov_degrees: 63.0  # 63 degrees
+          near: 1.0  # 1cm
+          far: 10000.0  # 100m
+        }
+      }
+    }
+  }
+}
+
+# Computes face geometry from face landmarks for a single face.
+node {
+  calculator: "FaceGeometryFromLandmarks"
+  input_stream: "IMAGE_SIZE:input_video_size"
+  input_stream: "MULTI_FACE_LANDMARKS:multi_mesh_landmarks"
+  input_side_packet: "ENVIRONMENT:environment"
+  output_stream: "MULTI_FACE_GEOMETRY:multi_face_geometry"
+}
+
+
+  node{
+      calculator: "FaceGeometryEffectRendererCalculator"
+      input_stream: "IMAGE_GPU:input_video"
+      input_stream: "MULTI_FACE_GEOMETRY:multi_face_geometry"
+      input_side_packet: "ENVIRONMENT:environment"
+      output_stream: "IMAGE_GPU:output_video"
+      node_options: {
+          [type.googleapis.com/mediapipe.FaceGeometryEffectRendererCalculatorOptions] {
+            effect_texture_path: "mediapipe/graphs/face_effect/data/facepaint.pngblob"
+            # effect_mesh_3d_path: "mediapipe/graphs/face_effect/data/glasses.binarypb"
+          }
+        }
+}
+
+
+
+
+# node {
+#   calculator: "RenderGPUBufferToCanvasCalculator"
+#   input_stream: "VIDEO_IN:transformed_input_video"
+#   output_stream: "VIDEO_OUT:output_video"
+# }
+
+

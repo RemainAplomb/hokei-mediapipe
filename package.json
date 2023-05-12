@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "binaryen": "^112.0.0"
+  }
+}

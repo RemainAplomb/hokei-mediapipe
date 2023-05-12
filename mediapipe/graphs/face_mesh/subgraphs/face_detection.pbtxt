@@ -1,0 +1,64 @@
+# MediaPipe Face detection subgraph.
+
+type: "FaceDetectionSubgraph"
+
+input_stream: "IMAGE:input_video"
+output_stream: "DETECTIONS:detections"
+
+
+
+node: {
+  calculator: "ImageToTensorCalculator"
+  input_stream: "IMAGE:input_video"
+  output_stream: "TENSORS:input_tensors"
+  output_stream: "MATRIX:transform_matrix"
+  options: {
+    [mediapipe.ImageToTensorCalculatorOptions.ext] {
+      output_tensor_width: 128
+      output_tensor_height: 128
+      keep_aspect_ratio: true
+      output_tensor_float_range {
+        min: -1.0
+        max: 1.0
+      }
+      border_mode: BORDER_ZERO
+      gpu_origin: TOP_LEFT
+    }
+  }
+}
+
+
+
+# Runs a TensorFlow Lite model on GPU that takes an image tensor and outputs a
+# vector of tensors representing, for instance, detection boxes/keypoints and
+# scores.
+
+# node {
+#   calculator: "TfLiteWebGlInferenceCalculator"
+#   input_stream: "TENSORS:input_tensors"
+#   output_stream: "TENSORS:detection_tensors"
+#   options: {
+#     [mediapipe.TfLiteInferenceCalculatorOptions.ext] {
+#       model_path: "mediapipe/modules/face_detection/face_detection_short_range.tflite"
+#     }
+#   }
+# }
+
+node {
+  calculator: "InferenceCalculator"
+  input_stream: "TENSORS:input_tensors"
+  output_stream: "TENSORS:detection_tensors"
+  options: {
+    [mediapipe.InferenceCalculatorOptions.ext] {
+      model_path: "mediapipe/modules/face_detection/face_detection_short_range.tflite"
+    }
+  }
+}
+
+# Performs tensor post processing to generate face detections.
+node {
+  calculator: "FaceDetectionShortRangeCommon"
+  input_stream: "TENSORS:detection_tensors"
+  input_stream: "MATRIX:transform_matrix"
+  output_stream: "DETECTIONS:detections"
+}

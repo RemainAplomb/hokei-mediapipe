@@ -1,0 +1,23 @@
+# MediaPipe solution graph for gender and landmark detection.
+
+# Define input image stream.
+input_stream: "input_video"
+
+# Define GenderLandmarkCalculator node.
+node {
+  calculator: "GenderLandmarkCalculator"
+  input_stream: "IMAGE:input_video"
+  output_stream: "FACE_LANDMARKS:face_landmarks"
+  output_stream: "GENDER:gender"
+  options: {
+    [mediapipe.GenderLandmarkCalculatorOptions] {
+      model_path: "mediapipe/models/mnv3_large_224_v2_genderFalse-2.tflite"
+    }
+  }
+}
+
+# Define output stream for face landmarks.
+output_stream: "face_landmarks"
+
+# Define output stream for gender.
+output_stream: "gender"

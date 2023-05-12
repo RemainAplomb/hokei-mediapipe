@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gender Landmark Detection</title>
+</head>
+
+<style>
+  body {
+    background-color: black;
+  }
+
+  #inputVideo {
+    position: absolute;
+    visibility: hidden;
+    height: 480px;
+    width: 640px;
+  }
+
+  #outputCanvas {
+    height: 480px;
+    width: 640px;
+  }
+</style>
+
+<body>
+  <video id="inputVideo"></video>
+  <canvas id="outputCanvas"></canvas>
+
+  <script src="gender_landmark_solution_wasm_bin.js"></script>
+  <script src="gender_landmark_solution_packed_assets_loader.js"></script>
+  <script>
+    var Module = {
+      onRuntimeInitialized: function() {
+        // Initialize the solution
+        const solution = new Module.GenderLandmarksWasm();
+        solution.loadGraph("gender_and_landmarks_wasm.pbtxt");
+
+        // Attach Multi Listener
+        const wantsVector = ["gender", "landmarks"];
+        solution.attachMultiListener(wantsVector, {
+          onResults: function(results) {
+            // process the results here
+            console.log(results);
+          }
+        });
+      }
+    };
+  </script>
+</body>
+</html>
